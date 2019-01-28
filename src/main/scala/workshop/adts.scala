@@ -82,12 +82,36 @@ object adts {
 
   case class ChessPiece(chessType: ChessType, position: Position)
 
-  // Write a function using pattern matching that takes a square and returns whether it can move there or not
+  sealed trait TimeUnit
+  case object Second extends TimeUnit
+  case object Minute extends TimeUnit
+  case object Hour extends TimeUnit
+  case object Day extends TimeUnit
+  case object Month extends TimeUnit
+
+  type Duration = Int
 
   // Model a data type that stores time spans
-  type TimeSpan = Unit
+  case class TimeSpan(duration: Duration, timeUnit: TimeUnit)
+
+  def convertToBasicUnit(timeSpan: TimeSpan): TimeSpan =
+    convertToBasicUnit(timeSpan.duration, timeSpan.timeUnit)
+
+  def convertToBasicUnit(duration: Duration, timeUnit: TimeUnit): TimeSpan = {
+    timeUnit match {
+      case Second => TimeSpan(duration, Second)
+      case Minute => convertToBasicUnit(duration * 60, Second)
+      case Hour   => convertToBasicUnit(duration * 60, Minute)
+      case Day    => convertToBasicUnit(duration * 24, Hour)
+      case Month  => convertToBasicUnit(duration * 30, Day)
+    }
+  }
 
   // Write a function that adds two TimeSpan values together
+
+  def addTimeSpan(a: TimeSpan, b: TimeSpan): TimeSpan =
+    TimeSpan(convertToBasicUnit(a).duration + convertToBasicUnit(b).duration,
+             Second)
 
   // List all values of the type `Unit`
   def allValuesUnit: Set[Unit] = ???
