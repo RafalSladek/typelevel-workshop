@@ -2,7 +2,7 @@
 
 ## DAY1
 
-Algebraic type
+Algebraic types
 
 Product types
 
@@ -25,3 +25,18 @@ Int either String
 ```
 
 case class is the fancy representation of product type.
+
+
+
+```
+  
+  Either[A, Nothing] === A  // Either is addition of types
+  A + 0 = A
+  
+  (A, Unit) === A // tuple is like multiplication of types
+  A * 1 = A
+  
+  (A, Nothing) === Nothing
+  A * 0 = 0
+  
+```

@@ -1,5 +1,8 @@
 package workshop
 
+import scala.util
+import scala.util.Either.RightProjection
+
 object adts {
 
   // Design a data type for coffee sizes, should have small medium and large
@@ -114,27 +117,46 @@ object adts {
              Second)
 
   // List all values of the type `Unit`
-  def allValuesUnit: Set[Unit] = ???
+  def allValuesUnit: Set[Unit] = Set(())
 
   // List all values of the type `Nothing`
-  def allValuesNothing: Set[Nothing] = ???
+  def allValuesNothing: Set[Nothing] = Set.empty
 
   // List all values of the type `Boolean`
-  def allValuesBoolean: Set[Boolean] = ???
+  def allValuesBoolean: Set[Boolean] = Set(false, true)
 
   // List all values of the type `Size`
-  def allValuesSize: Set[Size] = ???
+  def allValuesSize: Set[Size] = Set(Small, Medium, Large)
 
   // List all values of the type `(Size, Boolean)`
-  def allValuesTuple: Set[(Size, Boolean)] = ???
+  def allValuesTuple: Set[(Size, Boolean)] = Set(
+    (Small, true),
+    (Small, false),
+    (Medium, false),
+    (Medium, false),
+    (Large, false),
+    (Large, false)
+  )
 
   // List all values of the type `Either[Size, Boolean]`
-  def allValuesEither: Set[Either[Size, Boolean]] = ???
+  def allValuesEither: Set[Either[Size, Boolean]] = Set(
+    Left(Small),
+    Left(Medium),
+    Left(Large),
+    Right(true),
+    Right(false)
+  )
 
   // List all values of the type `(Size, Unit)`
-  def allValuesTupleUnit: Set[(Size, Unit)] = ???
+  def allValuesTupleUnit: Set[(Size, Unit)] = Set(
+    (Small, ()),
+    (Medium, ()),
+    (Large, ()),
+  )
 
   // List all values of the type `Either[Boolean, Nothing]`
-  def allValuesEitherNothing: Set[Either[Boolean, Nothing]] = ???
-
+  def allValuesEitherNothing: Set[Either[Boolean, Nothing]] = Set(
+    Left(true),
+    Left(false),
+  )
 }
