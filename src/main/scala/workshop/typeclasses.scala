@@ -118,16 +118,54 @@ object typeclasses {
     list.foldLeft(Monoid[A].empty)((x, y) => Monoid[A].combine(x, y))
   }
 
-  def foldMap[A, B: Monoid](list: List[A])(f: A => B): B = ???
+  def foldMap[A, B: Monoid](list: List[A])(f: A => B): B =
+    list.foldLeft(Monoid[B].empty)((x, y) => x.combine(f(y)))
 
-  implicit def tupleMonoid[A: Monoid, B: Monoid]: Monoid[(A, B)] = ???
+  implicit def tupleMonoid[A: Monoid, B: Monoid]: Monoid[(A, B)] =
+    new Monoid[(A, B)] {
+      def empty: (A, B) = (Monoid[A].empty, Monoid[B].empty)
+
+      def combine(x: (A, B), y: (A, B)): (A, B) =
+        (Monoid[A].combine(x._1, y._1), Monoid[B].combine(x._2, y._2))
+    }
 
   implicit def tuple3Monoid[A: Monoid, B: Monoid, C: Monoid]
-    : Monoid[(A, B, C)] = ???
+    : Monoid[(A, B, C)] = new Monoid[(A, B, C)] {
+    def empty: (A, B, C) = (Monoid[A].empty, Monoid[B].empty, Monoid[C].empty)
 
-  implicit def mapMonoid[A, B: Monoid]: Monoid[Map[A, B]] = ???
+    def combine(x: (A, B, C), y: (A, B, C)): (A, B, C) =
+      (Monoid[A].combine(x._1, y._1),
+       Monoid[B].combine(x._2, y._2),
+       Monoid[C].combine(x._3, y._3))
+  }
 
-  implicit def futureMonoid[A: Monoid]: Monoid[Future[A]] = ???
+  implicit def mapMonoid[A, B: Monoid]: Monoid[Map[A, B]] =
+    new Monoid[Map[A, B]] {
+      def empty: Map[A, B] = Map.empty
+
+      def combine(x: Map[A, B], y: Map[A, B]): Map[A, B] = {
+        val keys: Set[A] = Set.empty[A] ++ x.keySet ++ y.keySet
+        keys.map { k =>
+          (k, x.get(k), y.get(k)) match {
+            case (key, Some(a: B), Some(b: B)) => key -> a.combine(b)
+            case (key, None, None)             => key -> Monoid[B].empty
+            case (key, Some(a: B), None)       => key -> a
+            case (key, None, Some(b: B))       => key -> b
+          }
+        }.toMap
+      }
+    }
+
+  implicit def futureMonoid[A: Monoid]: Monoid[Future[A]] =
+    new Monoid[Future[A]] {
+      def empty: Future[A] = Future.successful[A](Monoid[A].empty)
+
+      def combine(x: Future[A], y: Future[A]): Future[A] =
+        for {
+          a <- x
+          b <- y
+        } yield a.combine(b)
+    }
 
   //Monoid word count
   //Use foldMap with a Monoid to count the number of words, the number of characters and the number of occurences of each word
