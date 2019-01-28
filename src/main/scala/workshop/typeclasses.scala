@@ -228,7 +228,14 @@ object typeclasses {
   case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
   case class Leaf[A](value: A) extends Tree[A]
 
-  implicit def treeFunctor: Functor[Tree] = ???
+  implicit def treeFunctor: Functor[Tree] = new Functor[Tree] {
+    def map[A, B](fa: Tree[A])(f: A => B): Tree[B] =
+      fa match {
+        case Leaf(a) => Leaf(f(a))
+        case Branch(left, right) =>
+          Branch(map(left)(f), map(right)(f))
+      }
+  }
 
   //Cardinality
 
