@@ -209,9 +209,20 @@ object typeclasses {
     def map[A, B](fa: F[A])(f: A => B): F[B]
   }
 
-  implicit def optionFunctor: Functor[Option] = ???
+  implicit def optionFunctor: Functor[Option] = new Functor[Option] {
+    def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa match {
+      case Some(a: A) => Some(f(a))
+      case _          => None
+    }
+  }
 
-  implicit def listFunctor: Functor[List] = ???
+  implicit def listFunctor: Functor[List] = new Functor[List] {
+    def map[A, B](fa: List[A])(f: A => B): List[B] = fa match {
+      case Nil          => Nil
+      case a :: Nil     => f(a) :: Nil
+      case head :: tail => f(head) :: map(tail)(f)
+    }
+  }
 
   sealed trait Tree[+A]
   case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
