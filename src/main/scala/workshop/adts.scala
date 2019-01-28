@@ -9,12 +9,80 @@ object adts {
   case object Large extends Size
 
   // Model a data type for a contact that can either be an email or a phone number
-  type Contact = Unit
+  sealed trait Contact
+  case class Email(value: String) extends Contact
+  case class PhoneNumber(value: String) extends Contact
 
   // Design a data type for a chess piece and its position on the chess board
-  type ChessPiece = Unit
+  // Write a function using pattern matching that takes a square and returns whether it can move there or not
+  sealed trait ChessType {
+    def canMove(target: Position): Boolean
+  }
+  case class King(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (a, b) if a == b && a == 0 || a == 1 =>
+          true // not moving or diagonal
+        case (1, 0) => true // back or forth
+        case (0, 1) => true // left or right
+        case _      => false
+      }
+  }
 
-  // Write a function using pattern mathcing that takes a square and returns whether it can move there or not
+  case class Queen(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (_, 0)           => true
+        case (0, _)           => true
+        case (a, b) if a == b => true // not moving or diagonal
+        case _                => false
+      }
+  }
+  case class Rook(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (0, 0) => true
+        case (_, 0) => true
+        case (0, _) => true
+        case _      => false
+      }
+  } // wieza
+
+  case class Bishop(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (a, b) if a == b => true
+        case _                => false
+      }
+  } // goniec
+
+  case class Knight(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (0, 0) => true
+        case (2, 1) => true
+        case (1, 2) => true
+        case _      => false
+      }
+  } // skoczek
+
+  case class Pawn(current: Position) extends ChessType {
+    override def canMove(target: Position): Boolean =
+      current.getDiff(target) match {
+        case (0, 0) => true
+        case (0, 1) => true
+        case _      => false
+      }
+  } // pionek
+
+  case class Position(x: Int, y: Int) {
+    def getDiff(target: Position): (Int, Int) =
+      (Math.abs(target.x - x), Math.abs(target.y - y))
+  }
+
+  case class ChessPiece(chessType: ChessType, position: Position)
+
+  // Write a function using pattern matching that takes a square and returns whether it can move there or not
 
   // Model a data type that stores time spans
   type TimeSpan = Unit
