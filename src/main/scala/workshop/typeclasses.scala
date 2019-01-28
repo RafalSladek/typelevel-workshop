@@ -33,8 +33,8 @@ object typeclasses {
 
   implicit def showOption[A: Show]: Show[Option[A]] = new Show[Option[A]] {
     def show(a: Option[A]): String = a match {
-      case None       => "None"
-      case Some(x: A) => "Some(x)"
+      case None    => "None"
+      case Some(x) => s"Some(${x})"
     }
   }
 
@@ -108,9 +108,15 @@ object typeclasses {
   // What we can do instead is define a small wrapper that allows us to multiply
   case class Mult(value: Int)
 
-  implicit def multMonoid: Monoid[Mult] = ???
+  implicit def multMonoid: Monoid[Mult] = new Monoid[Mult] {
+    def empty: Mult = Mult(1)
 
-  def combineAll[A: Monoid](list: List[A]): A = ???
+    def combine(x: Mult, y: Mult): Mult = Mult(x.value * y.value)
+  }
+
+  def combineAll[A: Monoid](list: List[A]): A = {
+    list.foldLeft(Monoid[A].empty)((x, y) => Monoid[A].combine(x, y))
+  }
 
   def foldMap[A, B: Monoid](list: List[A])(f: A => B): B = ???
 
