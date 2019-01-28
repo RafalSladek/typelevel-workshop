@@ -10,7 +10,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object abstractions {
 
-
   //Multiplicative Monoidal Functors
 
   @typeclass trait Monoidal[F[_]] extends Functor[F] {
@@ -24,13 +23,44 @@ object abstractions {
       map(product(fa, fb)) { case (a, b) => f(a, b) }
   }
 
-  implicit def optionMonoidal: Monoidal[Option] = ???
+  implicit def optionMonoidal: Monoidal[Option] = new Monoidal[Option] {
+    def product[A, B](fa: Option[A], fb: Option[B]): Option[(A, B)] = {
+      (fa, fb) match {
+        case (Some(a), Some(b)) => Some((a, b))
+        case (_, _)             => None
+      }
+    }
 
-  implicit def futureMonoidal: Monoidal[Future] = ???
+    def unit: Option[Unit] = Some(())
+
+    def map[A, B](fa: Option[A])(f: A => B): Option[B] =
+      fa.map(f)
+  }
+
+  implicit def futureMonoidal: Monoidal[Future] = new Monoidal[Future] {
+    def product[A, B](fa: Future[A], fb: Future[B]): Future[(A, B)] =
+      for {
+        a <- fa
+        b <- fb
+      } yield (a, b)
+
+    def unit: Future[Unit] = Future.successful(())
+
+    def map[A, B](fa: Future[A])(f: A => B): Future[B] = fa.map(f)
+  }
 
   // There are two possible solutions here, can you figure out which?
-  implicit def listMonoidal: Monoidal[List] = ???
+  implicit def listMonoidal: Monoidal[List] = new Monoidal[List] {
+    def product[A, B](fa: List[A], fb: List[B]): List[(A, B)] =
+      for {
+        a <- fa
+        b <- fb
+      } yield (a, b)
 
+    def unit: List[Unit] = List(())
+
+    def map[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
+  }
 
   def bundle[F[_]: Monoidal, A](x: F[A], y: F[A]): F[List[A]] = ???
 
@@ -38,15 +68,13 @@ object abstractions {
 
   def sequence[F[_]: Monoidal, A](list: List[F[A]]): F[List[A]] = ???
 
-  def traverse[F[_]: Monoidal, A, B](list: List[A])(f: A => F[B]): F[List[B]] = ???
+  def traverse[F[_]: Monoidal, A, B](list: List[A])(f: A => F[B]): F[List[B]] =
+    ???
 
   def ap[F[_]: Monoidal, A, B](ff: F[A => B], fa: F[A]): F[B] = ???
 
   //Given two Option[Int] multiply the int values if they exist or leave them unchanged if one of them doesn't
   def combineOptions(x: Option[Int], y: Option[Int]): Option[Int] = ???
-
-
-
 
   //Foldable
 
@@ -69,15 +97,12 @@ object abstractions {
   // Hint: YOu might need to defne a new type with a new monoid
   def find[F[_]: Foldable, A](fa: F[A], f: A => Boolean): Option[A] = ???
 
-
-
-
-
   //Traversable
-  @typeclass trait Traverse[F[_]]  {
+  @typeclass trait Traverse[F[_]] {
     def traverse[G[_]: Monoidal, A, B](fa: F[A])(f: A => G[B]): G[F[B]]
 
-    def sequence[G[_]: Monoidal, A](fga: F[G[A]]): G[F[A]] = traverse(fga)(identity)
+    def sequence[G[_]: Monoidal, A](fga: F[G[A]]): G[F[A]] =
+      traverse(fga)(identity)
   }
 
   implicit def listTraversable: Traverse[List] = ???
@@ -85,8 +110,6 @@ object abstractions {
   implicit def optionTraversable: Traverse[Option] = ???
 
   implicit def eitherTraversable[E]: Traverse[Either[E, ?]] = ???
-
-
 
   //Validated
 
@@ -104,7 +127,6 @@ object abstractions {
 
   implicit def validatedTraversable[E]: Traverse[Validated[E, ?]] = ???
 
-
   // Validation exercise
   // Use `Validated` and everything you've learned so far to solve this one
   // In the `model` object you can find two lists of unvalidated strings representing users
@@ -113,43 +135,23 @@ object abstractions {
   // Once your done, you can check the difference to Either
   def allUsers = ???
 
-
-
-
-
   // Next we want to write a function that takes a String representing a user
   // and return the UserReport for that user using the `User.fetchReport` function
   def reportForUser(u: String): Future[ValidatedList[String, UserReport]] = ???
 
-
-
-
   // Hard: Now get all reports for all the users
   def allReports = ???
-
-
-
-
-
-
-
-
-
 
   // Nested Monoidals
 
   case class Nested[F[_], G[_], A](value: F[G[A]])
 
-  implicit def nestedMonoidal[F[_]: Monoidal, G[_]: Monoidal]: Monoidal[Nested[F, G, ?]] = ???
-
+  implicit def nestedMonoidal[F[_]: Monoidal, G[_]: Monoidal]
+    : Monoidal[Nested[F, G, ?]] = ???
 
   // Try implementing `allReports` using `Nested`, it should be much easier this way
-  def allReportsUsingNested: Future[ValidatedList[String, List[UserReport]]] = ???
-
-
-
-
-
+  def allReportsUsingNested: Future[ValidatedList[String, List[UserReport]]] =
+    ???
   @typeclass trait ContravariantFunctor[F[_]] {
     def contramap[A, B](fa: F[A])(f: B => A): F[B]
   }
@@ -160,5 +162,6 @@ object abstractions {
 
   implicit def predicateContravariant: ContravariantFunctor[Predicate] = ???
 
-  implicit def stringEncoderContravariant: ContravariantFunctor[StringEncoder] = ???
+  implicit def stringEncoderContravariant: ContravariantFunctor[StringEncoder] =
+    ???
 }
