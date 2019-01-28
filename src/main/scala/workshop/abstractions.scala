@@ -62,11 +62,22 @@ object abstractions {
     def map[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
   }
 
-  def bundle[F[_]: Monoidal, A](x: F[A], y: F[A]): F[List[A]] = ???
+  // bundle(Option(2), Option(3)) => Option[List(2,3)]
+  def bundle[F[_]: Monoidal, A](x: F[A], y: F[A]): F[List[A]] = {
+    x.product(y).map(c => List(c._1, c._2))
+  }
 
-  def appendM[F[_]: Monoidal, A](x: F[A], y: F[List[A]]): F[List[A]] = ???
+  // appendM(Some(2), Some[List(1,3)]) => Some[List(1,3,2)]
+  def appendM[F[_]: Monoidal, A](x: F[A], y: F[List[A]]): F[List[A]] = {
+    x.product(y).map { case (a, list) => list :+ a }
+  }
 
-  def sequence[F[_]: Monoidal, A](list: List[F[A]]): F[List[A]] = ???
+  // sequence(List(Some(1), Some(2))) => Some(List(1,2))
+  def sequence[F[_]: Monoidal, A](list: List[F[A]]): F[List[A]] =
+    list.foldRight(Monoidal[F].pure(List.empty[A])) {
+      (cur: F[A], acc: F[List[A]]) =>
+        appendM(cur, acc)
+    }
 
   def traverse[F[_]: Monoidal, A, B](list: List[A])(f: A => F[B]): F[List[B]] =
     ???
