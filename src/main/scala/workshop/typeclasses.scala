@@ -183,10 +183,25 @@ object typeclasses {
   val numberOccurencies: Int =
     foldMap(words)(word => numberOfOccurences(word, words))
 
-  foldMap(words)(word => (1, numberCharacters, Map(word.toLowerCase() -> 1))) // using mapMonoid
-
   //Now that you have the word count let's extend it with the ability to get the longest word of the text.
   //Tip: Define a Maximum Monoid to do so
+
+  case class Max(word: String)
+
+  implicit def maxMonoid: Monoid[Max] = new Monoid[Max] {
+    def empty: Max = Max("")
+
+    def combine(x: Max, y: Max): Max = {
+      if (x.word.lengthCompare(y.word.length) > 0)
+        x
+      else
+        y
+    }
+  }
+
+  // foldMap is quit fast, since it iterates only once over the list and returns all those data at once
+  foldMap(words)(word =>
+    (Max(word), (1, numberCharacters, Map(word.toLowerCase() -> 1)))) // using mapMonoid,
 
   //Functor
 
