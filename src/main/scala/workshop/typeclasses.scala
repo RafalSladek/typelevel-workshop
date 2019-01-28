@@ -243,27 +243,58 @@ object typeclasses {
     def cardinality: BigInt
   }
 
-  implicit def cardinalityUnit: Cardinality[Unit] = ???
+  implicit def cardinalityUnit: Cardinality[Unit] = new Cardinality[Unit] {
+    def cardinality: BigInt = 1
+  }
 
-  implicit def cardinalityBoolean: Cardinality[Boolean] = ???
+  implicit def cardinalityBoolean: Cardinality[Boolean] =
+    new Cardinality[Boolean] {
+      def cardinality: BigInt = 2
+    }
 
-  implicit def cardinalityByte: Cardinality[Byte] = ???
+  implicit def cardinalityByte: Cardinality[Byte] = new Cardinality[Byte] {
+    def cardinality: BigInt = 256
+  }
 
-  implicit def cardinalityShort: Cardinality[Short] = ???
+  implicit def cardinalityShort: Cardinality[Short] = new Cardinality[Short] {
+    def cardinality: BigInt = BigInt(2 ^ 16)
+  }
 
-  implicit def cardinalityInt: Cardinality[Int] = ???
+  implicit def cardinalityInt: Cardinality[Int] = new Cardinality[Int] {
+    def cardinality: BigInt = BigInt(2 ^ 32)
+  }
 
   implicit def cardinalityTuple[A: Cardinality, B: Cardinality]
-    : Cardinality[(A, B)] = ???
+    : Cardinality[(A, B)] = new Cardinality[(A, B)] {
+    def cardinality: BigInt =
+      Cardinality[A].cardinality * Cardinality[B].cardinality
+  }
 
   implicit def cardinalityEither[A: Cardinality, B: Cardinality]
-    : Cardinality[Either[A, B]] = ???
+    : Cardinality[Either[A, B]] = new Cardinality[Either[A, B]] {
+    def cardinality: BigInt =
+      Cardinality[A].cardinality + Cardinality[B].cardinality
+  }
 
-  implicit def cardinalitySize: Cardinality[Size] = ???
+  implicit def cardinalitySize: Cardinality[Size] = new Cardinality[Size] {
+    def cardinality: BigInt = 3
+  }
 
-  implicit def cardinalityNothing: Cardinality[Nothing] = ???
+  implicit def cardinalityNothing: Cardinality[Nothing] =
+    new Cardinality[Nothing] {
+      def cardinality: BigInt = 0
+    }
 
   implicit def cardinalityFunction[A: Cardinality, B: Cardinality]
-    : Cardinality[A => B] = ???
+    : Cardinality[A => B] = new Cardinality[A => B] {
+    def cardinality: BigInt =
+      Cardinality[B].cardinality
+        .pow(Cardinality[A].cardinality.toInt) // if cardinality for a is in Int range
+  }
 
+  type +[A, B] = Either[A, B]
+  type *[A, B] = Tuple2[A, B]
+
+  Cardinality[Either[Int, (Short, Byte)]].cardinality
+  Cardinality[Int + Short * Byte].cardinality
 }
