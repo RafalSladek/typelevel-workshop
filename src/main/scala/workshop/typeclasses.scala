@@ -173,6 +173,18 @@ object typeclasses {
 
   val words: List[String] = rawText.split(" ").toList
 
+  def numberOfWords(word: String): Int = 1
+  def numberOfCharacters(word: String): Int = word.length
+  def numberOfOccurences(word: String, list: List[String]): Int =
+    list.count(x => x == word)
+
+  val numberWords: Int = foldMap(words)(numberOfWords)
+  val numberCharacters: Int = foldMap(words)(numberOfCharacters)
+  val numberOccurencies: Int =
+    foldMap(words)(word => numberOfOccurences(word, words))
+
+  foldMap(words)(word => (1, numberCharacters, Map(word.toLowerCase() -> 1))) // using mapMonoid
+
   //Now that you have the word count let's extend it with the ability to get the longest word of the text.
   //Tip: Define a Maximum Monoid to do so
 
