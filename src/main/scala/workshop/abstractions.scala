@@ -255,10 +255,33 @@ object abstractions {
 
   // Next we want to write a function that takes a String representing a user
   // and return the UserReport for that user using the `User.fetchReport` function
-  def reportForUser(u: String): Future[ValidatedList[String, UserReport]] = ???
+  def reportForUser(u: String): Future[ValidatedList[String, UserReport]] = {
+
+    // String => ValidatedList[String, User]
+    val userOrError: ValidatedList[String, User] = User.validate(u)
+
+    // ValidatedList[String, User] => Future[ValidatedList[String, UserReport]]
+    User.validate(u).traverse(user => User.fetchReport(user))
+  }
 
   // Hard: Now get all reports for all the users
-  def allReports = ???
+  def allReports(
+      list: List[String]): Future[ValidatedList[String, List[UserReport]]] = {
+
+    // List[String] => Future[List[ValidatedList[String, UserReport]]]
+    val futureList: Future[List[ValidatedList[String, UserReport]]] =
+      list.traverse(s =>
+        User.validate(s).traverse(user => User.fetchReport(user)))
+
+    // Future[List[ValidatedList[String, UserReport]]]  => Future[ValidatedList[String, List[UserReport]]]
+    val futureValidateListListUserReports
+      : Future[ValidatedList[String, List[UserReport]]] =
+      futureList.map(fl => sequence(fl))
+    futureValidateListListUserReports
+
+    // shorter version
+    list.traverse(reportForUser).map(s => sequence(s))
+  }
 
   // Nested Monoidals
 
