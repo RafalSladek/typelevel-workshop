@@ -133,7 +133,25 @@ object abstractions {
 
   // Find the first element that matches the predicate
   // Hint: YOu might need to defne a new type with a new monoid
-  def find[F[_]: Foldable, A](fa: F[A], f: A => Boolean): Option[A] = ???
+
+  case class FirstOption[A](value: Option[A])
+
+  implicit def firstOptionMonoid[A]: Monoid[FirstOption[A]] =
+    new Monoid[FirstOption[A]] {
+      def empty: FirstOption[A] = FirstOption(None)
+
+      def combine(x: FirstOption[A], y: FirstOption[A]): FirstOption[A] =
+        x.value match {
+          case Some(_) => x
+          case None    => y
+        }
+    }
+
+  // find(List(1,2,3,4,5),(n:Int) => n % 2 == 0) > Option[Int] = Some(2)
+  def find[F[_]: Foldable, A](fa: F[A], f: A => Boolean): Option[A] =
+    fa.foldMap[FirstOption[A]](a =>
+        if (f(a)) FirstOption(Some(a)) else FirstOption(None))
+      .value
 
   //Traversable
   @typeclass trait Traverse[F[_]] {
