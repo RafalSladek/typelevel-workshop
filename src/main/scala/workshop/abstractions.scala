@@ -178,7 +178,14 @@ object abstractions {
     }
   }
 
-  implicit def eitherTraversable[E]: Traverse[Either[E, ?]] = ???
+  implicit def eitherTraversable[E]: Traverse[Either[E, ?]] =
+    new Traverse[Either[E, ?]] {
+      def traverse[G[_]: Monoidal, A, B](fa: Either[E, A])(
+          f: A => G[B]): G[Either[E, B]] = fa match {
+        case Right(a) => f(a).map((b: B) => Right(b))
+        case Left(a)  => Monoidal[G].pure(Left(a))
+      }
+    }
 
   //Validated
 
