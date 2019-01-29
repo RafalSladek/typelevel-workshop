@@ -195,11 +195,35 @@ object abstractions {
 
   type ValidatedList[+E, +A] = Validated[List[E], A]
 
-  def toEither[E, A](v: Validated[E, A]): Either[E, A] = ???
+  def toEither[E, A](v: Validated[E, A]): Either[E, A] = v match {
+    case Valid(a)   => Right(a)
+    case Invalid(a) => Left(a)
+  }
 
-  def toValidated[E, A](e: Either[E, A]): Validated[E, A] = ???
+  def toValidated[E, A](e: Either[E, A]): Validated[E, A] = e match {
+    case Right(e) => Valid(e)
+    case Left(e)  => Invalid(e)
+  }
 
-  implicit def validatedMonoidal[E: Monoid]: Monoidal[Validated[E, ?]] = ???
+  implicit def validatedMonoidal[E: Monoid]: Monoidal[Validated[E, ?]] =
+    new Monoidal[Validated[E, ?]] {
+      def product[A, B](fa: Validated[E, A],
+                        fb: Validated[E, B]): Validated[E, (A, B)] =
+        (fa, fb) match {
+          case (Valid(a), Valid(b))       => Valid(a, b)
+          case (Invalid(e), Valid(b))     => Invalid(e)
+          case (Valid(a), Invalid(e))     => Invalid(e)
+          case (Invalid(e1), Invalid(e2)) => Invalid(e1 combine e2)
+        }
+
+      def unit: Validated[E, Unit] = Valid(())
+
+      def map[A, B](fa: Validated[E, A])(f: A => B): Validated[E, B] =
+        fa match {
+          case Valid(a)   => Valid(f(a))
+          case Invalid(a) => Invalid(a)
+        }
+    }
 
   implicit def validatedTraversable[E]: Traverse[Validated[E, ?]] = ???
 
