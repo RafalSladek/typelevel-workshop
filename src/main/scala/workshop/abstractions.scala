@@ -92,7 +92,8 @@ object abstractions {
     }
 
   //Given two Option[Int] multiply the int values if they exist or leave them unchanged if one of them doesn't
-  def combineOptions(x: Option[Int], y: Option[Int]): Option[Int] = ???
+  def combineOptions(x: Option[Int], y: Option[Int]): Option[Int] =
+    x.map2(y)(_ * _)
 
   //Foldable
 
