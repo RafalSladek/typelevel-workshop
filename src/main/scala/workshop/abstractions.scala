@@ -80,9 +80,16 @@ object abstractions {
     }
 
   def traverse[F[_]: Monoidal, A, B](list: List[A])(f: A => F[B]): F[List[B]] =
-    ???
+    list.foldRight(Monoidal[F].pure(List.empty[B])) {
+      (cur: A, acc: F[List[B]]) =>
+        appendM(f(cur), acc)
+    }
 
-  def ap[F[_]: Monoidal, A, B](ff: F[A => B], fa: F[A]): F[B] = ???
+  // ff: Option[Int => String], Option[Int] => Option[String]
+  def applyFunction[F[_]: Monoidal, A, B](ff: F[A => B], fa: F[A]): F[B] =
+    Monoidal[F].map2(ff, fa) { (f: A => B, a: A) =>
+      f(a)
+    }
 
   //Given two Option[Int] multiply the int values if they exist or leave them unchanged if one of them doesn't
   def combineOptions(x: Option[Int], y: Option[Int]): Option[Int] = ???
