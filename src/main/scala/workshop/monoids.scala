@@ -40,7 +40,17 @@ object monoids {
   implicit def categoryFunction: Category[Function1] = new Category[Function1] {
     def compose[A, B, C](fab: A => B, fbc: B => C): A => C = a => fbc(fab(a))
 
-  implicit def monoidEndoCategory[F[_, _]: Category, A]: Monoid[F[A, A]] = ???
+    def identity[A]: A => A = a => a
+  }
+
+  type EndoFunction[A] = A => A
+
+  implicit def monoidEndoCategory[F[_, _]: Category, A]: Monoid[F[A, A]] =
+    new Monoid[F[A, A]] {
+      def empty: F[A, A] = Category[F].identity
+
+      def combine(x: F[A, A], y: F[A, A]): F[A, A] = Category[F].compose(x, y)
+    }
 
   def plusOne: Int => Int = _ + 1
 
@@ -48,30 +58,28 @@ object monoids {
 
   def plusOneTimes3: Int => Int = plusOne |+| times3
 
-
   def plusOneTimes3ToString: Int => String = ???
-
 
   // Different Category instances
   case class OptionFunction[A, B](apply: A => Option[B])
 
   case class EffectFunction[A, B](apply: A => B)
 
+  implicit def categoryOptionFunction: Category[OptionFunction] =
+    new Category[OptionFunction] {
+      def identity[A]: OptionFunction[A, A] = ???
 
-  implicit def categoryOptionFunction: Category[OptionFunction] = new Category[OptionFunction] {
-    def identity[A]: OptionFunction[A, A] = ???
-
-    def compose[A, B, C](fab: OptionFunction[A, B], fbc: OptionFunction[B, C]): OptionFunction[A, C] =
-      OptionFunction { a =>
-        fab.apply(a) match {
-          case Some(b) => fbc.apply(b)
-          case None => None
+      def compose[A, B, C](fab: OptionFunction[A, B],
+                           fbc: OptionFunction[B, C]): OptionFunction[A, C] =
+        OptionFunction { a =>
+          fab.apply(a) match {
+            case Some(b) => fbc.apply(b)
+            case None    => None
+          }
         }
-      }
-  }
+    }
 
   implicit def categoryEffectFunction: Category[EffectFunction] = ???
-
 
   // We can define real life synchronous programs without breaking referential transparency using EffectFunction
 
@@ -87,27 +95,27 @@ object monoids {
   @typeclass trait Profunctor[F[_, _]] {
     def dimap[A, B, C, D](fac: F[B, C])(f: A => B)(g: C => D): F[A, D]
 
-    def rmap[A, B, C](fab: F[A, B])(f: B => C): F[A, C] = dimap(fab)(identity[A])(f)
+    def rmap[A, B, C](fab: F[A, B])(f: B => C): F[A, C] =
+      dimap(fab)(identity[A])(f)
 
-    def lmap[A, B, C](fbc: F[B, C])(f: A => B): F[A, C] = dimap(fbc)(f)(identity)
+    def lmap[A, B, C](fbc: F[B, C])(f: A => B): F[A, C] =
+      dimap(fbc)(f)(identity)
   }
 
-  implicit def profunctorFunction: Profunctor[Function1] = new Profunctor[Function1] {
-    def dimap[A, B, C, D](fac: B => C)(f: A => B)(g: C => D): A => D =
-      f >>> fac >>> g
-  }
+  implicit def profunctorFunction: Profunctor[Function1] =
+    new Profunctor[Function1] {
+      def dimap[A, B, C, D](fac: B => C)(f: A => B)(g: C => D): A => D =
+        f >>> fac >>> g
+    }
 
   implicit def profunctorEffectFunction: Profunctor[EffectFunction] = ???
 
   implicit def profunctorOptionFunction: Profunctor[OptionFunction] = ???
 
-
-
   // Now try to define an EffectFunction that prompts you to type your name,
   // then reads your name from stdin and outputs a greeting with your name.
   // To do so, you can use the `readLine` and `printLine` functions from `util`.
   def consoleProgram = ???
-
 
   // We can define functions that might fail with a value
 
@@ -117,14 +125,13 @@ object monoids {
 
   implicit def profunctorFailFunction: Profunctor[FailFunction] = ???
 
-
   trait FailProgram {
     def program: FailFunction[List[String], Unit]
 
     def main(args: Array[String]): Unit =
       program.apply(args.toList) match {
         case Left(t) => throw t
-        case _ => ()
+        case _       => ()
       }
   }
 
@@ -132,27 +139,16 @@ object monoids {
   // You can try using the `data/test.txt` file.
   def fileProgram = ???
 
-
-
-
-
-
-
-
-
   // Tasks
 
   type Task[A] = FailFunction[Unit, A]
 
   def newCompose[A, B](ta: Task[A])(f: FailFunction[A, B]): Task[B] = ???
 
-
   type OptionTask[A] = OptionFunction[Unit, A]
 
-  def optionCompose[A, B](ta: OptionTask[A])(f: OptionFunction[A, B]): OptionTask[B] = ???
-
-
-
+  def optionCompose[A, B](ta: OptionTask[A])(
+      f: OptionFunction[A, B]): OptionTask[B] = ???
 
   // Monad
 
@@ -174,10 +170,8 @@ object monoids {
 
   implicit def monadEither[E]: Monad[Either[E, ?]] = ???
 
-
-  def composeMonadFunctions[F[_]: Monad, A, B, C](x: A => F[B], y: B => F[C]): A => F[C] = ???
-
-
+  def composeMonadFunctions[F[_]: Monad, A, B, C](x: A => F[B],
+                                                  y: B => F[C]): A => F[C] = ???
 
   // Kleisli
 
@@ -185,12 +179,10 @@ object monoids {
 
   implicit def categoryKleisli[F[_]: Monad]: Category[Kleisli[F, ?, ?]] = ???
 
-  implicit def profunctorKleisli[F[_]: Monad]: Profunctor[Kleisli[F, ?, ?]] = ???
-
+  implicit def profunctorKleisli[F[_]: Monad]: Profunctor[Kleisli[F, ?, ?]] =
+    ???
 
   // Now that we have Kleisli, go back and redefine OptionFunction and FailFunction as a special case of Kleisli
-
-
 
   // IO
 
@@ -210,11 +202,9 @@ object monoids {
   // Run both effects one after another, but only return the result of the first
   def ignoreSecondResult[A, B](fa: IO[A], fb: IO[B]): IO[A] = ???
 
-
   // Reimplement fileprogram using `IO` instead
   // Tip: You can use for-comprehensions, you can try writing a version with and without using for-comprehensions
   def fileProgramIO = ???
-
 
   // Use IO to print out each of the names given to this function
   // You can test this using `model.userList1`
