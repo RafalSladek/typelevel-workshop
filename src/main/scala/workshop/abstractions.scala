@@ -7,6 +7,7 @@ import simulacrum.typeclass
 import scala.concurrent.Future
 import abstractions.Monoidal.ops._
 import abstractions.Traverse.ops._
+import abstractions.ContravariantFunctor.ops._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import typeclasses.Monoid.ops._
@@ -355,8 +356,22 @@ object abstractions {
 
   case class StringEncoder[A](run: A => String)
 
-  implicit def predicateContravariant: ContravariantFunctor[Predicate] = ???
+  implicit def predicateContravariant: ContravariantFunctor[Predicate] =
+    new ContravariantFunctor[Predicate] {
+      def contramap[A, B](fa: Predicate[A])(f: B => A): Predicate[B] =
+        Predicate((b: B) => fa.run(f(b): A))
+    }
+
+  val largerThenTwenty = Predicate[Int](_ > 20)
+
+  case class Person(name: String, age: Int)
+
+  val isPersoneOlderThenTwenty: Predicate[Person] =
+    largerThenTwenty.contramap(_.age)
 
   implicit def stringEncoderContravariant: ContravariantFunctor[StringEncoder] =
-    ???
+    new ContravariantFunctor[StringEncoder] {
+      def contramap[A, B](fa: StringEncoder[A])(f: B => A): StringEncoder[B] =
+        StringEncoder((b: B) => fa.run(f(b): A))
+    }
 }
