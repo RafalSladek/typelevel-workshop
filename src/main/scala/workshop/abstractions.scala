@@ -247,6 +247,24 @@ object abstractions {
     list.traverse(s => User.validate(s))
   }
 
+  implicit def eitherMonoids[E]: Monoidal[Either[E, ?]] =
+    new Monoidal[Either[E, ?]] {
+      def product[A, B](fa: Either[E, A], fb: Either[E, B]): Either[E, (A, B)] =
+        (fa, fb) match {
+          case (Right(a), Right(b)) => Right(a, b)
+          case (Left(a), Left(b))   => Left(a)
+          case (Right(a), Left(b))  => Left(b)
+          case (Left(a), Right(b))  => Left(a)
+        }
+
+      def unit: Either[E, Unit] = Right(())
+
+      def map[A, B](fa: Either[E, A])(f: A => B): Either[E, B] = fa.map(f)
+    }
+
+  def allUsersEither(list: List[String]): Either[List[String], List[User]] =
+    list.traverse(s => toEither(User.validate(s)))
+
   // = Valid(List(User(joanna,doe), User(barbara,doe), User(kevin,doe), User(jonathan,doe), User(jason,doe), User(jane,doe), User(john,doe)))
   val allUsersList1 = allUsers(model.userList1)
 
