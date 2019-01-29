@@ -124,7 +124,12 @@ object abstractions {
   }
 
   // Turn this foldable into a List
-  def fromFoldable[F[_]: Foldable, A](fa: F[A]): List[A] = ???
+
+  import abstractions.Foldable.ops._
+
+  // it is generic toList implementation
+  def fromFoldable[F[_]: Foldable, A](fa: F[A]): List[A] =
+    fa.foldMap(a => List(a))
 
   // Find the first element that matches the predicate
   // Hint: YOu might need to defne a new type with a new monoid
