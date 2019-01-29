@@ -310,9 +310,25 @@ object abstractions {
     }
   }
 
+  def reportForUserNested(
+      u: String): Nested[Future, ValidatedList[String, ?], UserReport] = {
+    Nested(User.validate(u).traverse(user => User.fetchReport(user)))
+  }
+
   // Try implementing `allReports` using `Nested`, it should be much easier this way
-  def allReportsUsingNested: Future[ValidatedList[String, List[UserReport]]] =
-    ???
+  def allReportsUsingNested(
+      list: List[String]): Future[ValidatedList[String, List[UserReport]]] = {
+    //  Future[ValidatedList[String, UserReport]]
+
+    // List[String] => Future[List[ValidatedList[String, UserReport]]]
+    // list.traverse(s => reportForUser(s))
+
+    //  Future[ValidatedList[String, List[UserReport]]]
+    val t: Future[ValidatedList[String, List[UserReport]]] =
+      list.traverse(s => reportForUserNested(s)).value
+    t
+  }
+
   @typeclass trait ContravariantFunctor[F[_]] {
     def contramap[A, B](fa: F[A])(f: B => A): F[B]
   }
