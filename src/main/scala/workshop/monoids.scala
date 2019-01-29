@@ -230,9 +230,22 @@ object monoids {
     def unit: Option[Unit] = Some(())
   }
 
-  implicit def monadTask: Monad[Task] = ???
+  implicit def monadTask: Monad[Task] = new Monad[Task] {
+    def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
+      fa >>> FailFunction(a => f(a).apply(()))
 
-  implicit def monadEither[E]: Monad[Either[E, ?]] = ???
+    def unit: Task[Unit] = FailFunction(_ => Right(unit)) // identity
+  }
+
+  implicit def monadEither[E]: Monad[Either[E, ?]] = new Monad[Either[E, ?]] {
+    def flatMap[A, B](fa: Either[E, A])(f: A => Either[E, B]): Either[E, B] =
+      fa match {
+        case Right(a) => f(a)
+        case Left(t)  => Left(t)
+      }
+
+    def unit: Either[E, Unit] = Right()
+  }
 
   def composeMonadFunctions[F[_]: Monad, A, B, C](x: A => F[B],
                                                   y: B => F[C]): A => F[C] = ???
