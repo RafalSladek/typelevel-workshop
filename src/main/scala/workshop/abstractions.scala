@@ -79,6 +79,7 @@ object abstractions {
         appendM(cur, acc)
     }
 
+  // traverse(List(1,2,3,4))(n => if(n > 0) Some(n) else None)
   def traverse[F[_]: Monoidal, A, B](list: List[A])(f: A => F[B]): F[List[B]] =
     list.foldRight(Monoidal[F].pure(List.empty[B])) {
       (cur: A, acc: F[List[B]]) =>
