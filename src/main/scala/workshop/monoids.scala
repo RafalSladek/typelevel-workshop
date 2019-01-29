@@ -67,7 +67,7 @@ object monoids {
 
   implicit def categoryOptionFunction: Category[OptionFunction] =
     new Category[OptionFunction] {
-      def identity[A]: OptionFunction[A, A] = ???
+      def identity[A]: OptionFunction[A, A] = OptionFunction(Some(_))
 
       def compose[A, B, C](fab: OptionFunction[A, B],
                            fbc: OptionFunction[B, C]): OptionFunction[A, C] =
@@ -79,7 +79,15 @@ object monoids {
         }
     }
 
-  implicit def categoryEffectFunction: Category[EffectFunction] = ???
+  implicit def categoryEffectFunction: Category[EffectFunction] =
+    new Category[EffectFunction] {
+
+      def compose[A, B, C](fab: EffectFunction[A, B],
+                           fbc: EffectFunction[B, C]): EffectFunction[A, C] =
+        EffectFunction(fbc.apply.compose(fab.apply))
+
+      def identity[A]: EffectFunction[A, A] = EffectFunction(a => a)
+    }
 
   // We can define real life synchronous programs without breaking referential transparency using EffectFunction
 
@@ -108,14 +116,32 @@ object monoids {
         f >>> fac >>> g
     }
 
-  implicit def profunctorEffectFunction: Profunctor[EffectFunction] = ???
+  implicit def profunctorEffectFunction: Profunctor[EffectFunction] =
+    new Profunctor[EffectFunction] {
+      def dimap[A, B, C, D](fac: EffectFunction[B, C])(f: A => B)(
+          g: C => D): EffectFunction[A, D] =
+        EffectFunction(f >>> fac.apply >>> g)
+    }
 
-  implicit def profunctorOptionFunction: Profunctor[OptionFunction] = ???
+  implicit def profunctorOptionFunction: Profunctor[OptionFunction] =
+    new Profunctor[OptionFunction] {
+      def dimap[A, B, C, D](fac: OptionFunction[B, C])(f: A => B)(
+          g: C => D): OptionFunction[A, D] = ???
+
+    }
 
   // Now try to define an EffectFunction that prompts you to type your name,
   // then reads your name from stdin and outputs a greeting with your name.
   // To do so, you can use the `readLine` and `printLine` functions from `util`.
-  def consoleProgram = ???
+  def consoleProgram: EffectFunction[Unit, Unit] = prompt >>> readName >>> greet
+
+  def prompt: EffectFunction[Unit, Unit] =
+    util.printLine.lmap(_ => "Hello please write your name")
+
+  def readName: EffectFunction[Unit, String] = util.readLine
+
+  def greet: EffectFunction[String, Unit] =
+    util.printLine.lmap(name => s"Hi, ${name}")
 
   // We can define functions that might fail with a value
 
