@@ -8,6 +8,8 @@ import abstractions.Monoidal.ops._
 import abstractions.Traverse.ops._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import typeclasses.Monoid.ops._
+
 object abstractions {
 
   //Multiplicative Monoidal Functors
@@ -106,7 +108,10 @@ object abstractions {
 
   implicit def optionFoldable: Foldable[Option] = ???
 
-  implicit def listFoldable: Foldable[List] = ???
+  implicit def listFoldable: Foldable[List] = new Foldable[List] {
+    def foldMap[A, B: Monoid](list: List[A])(f: A => B): B =
+      list.foldLeft(Monoid[B].empty)((x, y) => x.combine(f(y)))
+  }
 
   implicit def setFoldable: Foldable[Set] = ???
 
