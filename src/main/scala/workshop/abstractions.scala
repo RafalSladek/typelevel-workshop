@@ -161,7 +161,14 @@ object abstractions {
       traverse(fga)(identity)
   }
 
-  implicit def listTraversable: Traverse[List] = ???
+  implicit def listTraversable: Traverse[List] = new Traverse[List] {
+    def traverse[G[_]: Monoidal, A, B](list: List[A])(
+        f: A => G[B]): G[List[B]] =
+      list.foldRight(Monoidal[G].pure(List.empty[B])) {
+        (cur: A, acc: G[List[B]]) =>
+          appendM(f(cur), acc)
+      }
+  }
 
   implicit def optionTraversable: Traverse[Option] = ???
 
