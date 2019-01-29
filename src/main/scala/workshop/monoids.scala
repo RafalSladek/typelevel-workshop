@@ -1,5 +1,7 @@
 package workshop
 
+import java.io.File
+
 import simulacrum.typeclass
 import workshop.typeclasses._
 import workshop.abstractions.Monoidal
@@ -133,6 +135,8 @@ object monoids {
   // Now try to define an EffectFunction that prompts you to type your name,
   // then reads your name from stdin and outputs a greeting with your name.
   // To do so, you can use the `readLine` and `printLine` functions from `util`.
+
+  // consoleProgram.apply()
   def consoleProgram: EffectFunction[Unit, Unit] = prompt >>> readName >>> greet
 
   def prompt: EffectFunction[Unit, Unit] =
@@ -147,7 +151,18 @@ object monoids {
 
   case class FailFunction[A, B](apply: A => Either[Throwable, B])
 
-  implicit def categoryFailFunction: Category[FailFunction] = ???
+  implicit def categoryFailFunction: Category[FailFunction] =
+    new Category[FailFunction] {
+      def compose[A, B, C](fab: FailFunction[A, B],
+                           fbc: FailFunction[B, C]): FailFunction[A, C] =
+        FailFunction(a =>
+          fab.apply(a) match {
+            case Right(b) => fbc.apply(b)
+            case Left(t)  => Left(t)
+        })
+
+      def identity[A]: FailFunction[A, A] = FailFunction(a => Right(a))
+    }
 
   implicit def profunctorFailFunction: Profunctor[FailFunction] = ???
 
@@ -163,7 +178,23 @@ object monoids {
 
   // Next try to define a FailFunction that reads a file name from stdin, then reads from that file and prints out its content
   // You can try using the `data/test.txt` file.
-  def fileProgram = ???
+
+  // fileProgramm.apply(())
+  def fileProgram =
+    readFileName >>> loadFile >>> readFile >>> printOutFile
+
+  def readFileName: FailFunction[Unit, String] = toFailFunction(util.readLine)
+
+  def loadFile: FailFunction[String, File] =
+    toFailFunction(EffectFunction(s => new java.io.File(s)))
+
+  def readFile: FailFunction[File, String] = util.readFile
+
+  def printOutFile: FailFunction[String, Unit] =
+    toFailFunction(util.printLine.lmap(s => s"${s}"))
+
+  def toFailFunction[A, B](ef: EffectFunction[A, B]): FailFunction[A, B] =
+    FailFunction(a => Right(ef.apply(a)))
 
   // Tasks
 
