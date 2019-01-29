@@ -106,7 +106,12 @@ object abstractions {
     def combineAll[A: Monoid](fa: F[A]): A = foldMap(fa)(identity)
   }
 
-  implicit def optionFoldable: Foldable[Option] = ???
+  implicit def optionFoldable: Foldable[Option] = new Foldable[Option] {
+    def foldMap[A, B: Monoid](fa: Option[A])(f: A => B): B = fa match {
+      case Some(a) => f(a)
+      case None    => Monoid[B].empty
+    }
+  }
 
   implicit def listFoldable: Foldable[List] = new Foldable[List] {
     def foldMap[A, B: Monoid](list: List[A])(f: A => B): B =
