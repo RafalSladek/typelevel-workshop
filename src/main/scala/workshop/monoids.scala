@@ -58,7 +58,7 @@ object monoids {
 
   def plusOneTimes3: Int => Int = plusOne |+| times3
 
-  def plusOneTimes3ToString: Int => String = ???
+  def plusOneTimes3ToString: Int => String = _.toString
 
   // Different Category instances
   case class OptionFunction[A, B](apply: A => Option[B])
