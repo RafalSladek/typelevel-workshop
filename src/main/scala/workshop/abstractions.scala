@@ -118,7 +118,10 @@ object abstractions {
       list.foldLeft(Monoid[B].empty)((x, y) => x.combine(f(y)))
   }
 
-  implicit def setFoldable: Foldable[Set] = ???
+  implicit def setFoldable: Foldable[Set] = new Foldable[Set] {
+    def foldMap[A, B: Monoid](fa: Set[A])(f: A => B): B =
+      fa.foldLeft(Monoid[B].empty)((acc, cur) => acc combine f(cur))
+  }
 
   // Turn this foldable into a List
   def fromFoldable[F[_]: Foldable, A](fa: F[A]): List[A] = ???
