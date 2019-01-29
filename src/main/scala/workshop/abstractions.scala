@@ -288,7 +288,27 @@ object abstractions {
   case class Nested[F[_], G[_], A](value: F[G[A]])
 
   implicit def nestedMonoidal[F[_]: Monoidal, G[_]: Monoidal]
-    : Monoidal[Nested[F, G, ?]] = ???
+    : Monoidal[Nested[F, G, ?]] = new Monoidal[Nested[F, G, ?]] {
+    def product[A, B](fa: Nested[F, G, A],
+                      fb: Nested[F, G, B]): Nested[F, G, (A, B)] = {
+      val fga: F[G[A]] = fa.value
+      val fgb: F[G[B]] = fb.value
+
+      val fgagb: F[(G[A], G[B])] = fga.product(fgb)
+
+      val value: F[G[(A, B)]] = fgagb.map {
+        case (ga, gb) => ga.product(gb)
+      }
+      Nested(value)
+    }
+
+    def unit: Nested[F, G, Unit] =
+      Nested(Monoidal[F].pure(Monoidal[G].pure(())))
+
+    def map[A, B](fa: Nested[F, G, A])(f: A => B): Nested[F, G, B] = {
+      Nested(fa.value.map(ga => ga.map(a => f(a))))
+    }
+  }
 
   // Try implementing `allReports` using `Nested`, it should be much easier this way
   def allReportsUsingNested: Future[ValidatedList[String, List[UserReport]]] =
