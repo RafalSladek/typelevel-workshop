@@ -200,12 +200,12 @@ object monoids {
 
   type Task[A] = FailFunction[Unit, A]
 
-  def newCompose[A, B](ta: Task[A])(f: FailFunction[A, B]): Task[B] = ???
+  def newCompose[A, B](ta: Task[A])(f: FailFunction[A, B]): Task[B] = ta >>> f
 
   type OptionTask[A] = OptionFunction[Unit, A]
 
   def optionCompose[A, B](ta: OptionTask[A])(
-      f: OptionFunction[A, B]): OptionTask[B] = ???
+      f: OptionFunction[A, B]): OptionTask[B] = ta >>> f
 
   // Monad
 
@@ -221,7 +221,14 @@ object monoids {
       flatMap(fa)(a => pure(f(a)))
   }
 
-  implicit def monadOption: Monad[Option] = ???
+  implicit def monadOption: Monad[Option] = new Monad[Option] {
+    def flatMap[A, B](fa: Option[A])(f: A => Option[B]): Option[B] = fa match {
+      case Some(a) => f(a)
+      case _       => None
+    }
+
+    def unit: Option[Unit] = Some(())
+  }
 
   implicit def monadTask: Monad[Task] = ???
 
