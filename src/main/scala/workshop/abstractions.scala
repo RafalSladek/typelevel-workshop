@@ -225,7 +225,14 @@ object abstractions {
         }
     }
 
-  implicit def validatedTraversable[E]: Traverse[Validated[E, ?]] = ???
+  implicit def validatedTraversable[E]: Traverse[Validated[E, ?]] =
+    new Traverse[Validated[E, ?]] {
+      def traverse[G[_]: Monoidal, A, B](fa: Validated[E, A])(
+          f: A => G[B]): G[Validated[E, B]] = fa match {
+        case Valid(a)   => f(a).map((b: B) => Valid(b)) // G[Valid[B]]
+        case Invalid(e) => Monoidal[G].pure(Invalid(e))
+      }
+    }
 
   // Validation exercise
   // Use `Validated` and everything you've learned so far to solve this one
