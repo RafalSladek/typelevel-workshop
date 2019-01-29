@@ -170,7 +170,13 @@ object abstractions {
       }
   }
 
-  implicit def optionTraversable: Traverse[Option] = ???
+  implicit def optionTraversable: Traverse[Option] = new Traverse[Option] {
+    def traverse[G[_]: Monoidal, A, B](fa: Option[A])(
+        f: A => G[B]): G[Option[B]] = fa match {
+      case None    => Monoidal[G].pure(None)
+      case Some(a) => f(a).map((b: B) => Some(b))
+    }
+  }
 
   implicit def eitherTraversable[E]: Traverse[Either[E, ?]] = ???
 
