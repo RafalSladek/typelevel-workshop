@@ -3,12 +3,14 @@ package workshop
 import workshop.typeclasses._
 import workshop.model._
 import simulacrum.typeclass
+
 import scala.concurrent.Future
 import abstractions.Monoidal.ops._
 import abstractions.Traverse.ops._
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import typeclasses.Monoid.ops._
+import workshop.abstractions.ValidatedList
 
 object abstractions {
 
@@ -240,7 +242,16 @@ object abstractions {
   // Your job is to check all of them whether they are valid or not.
   // To do so, you should use the `User.validate` function.
   // Once your done, you can check the difference to Either
-  def allUsers = ???
+  def allUsers(list: List[String]): ValidatedList[String, List[User]] = {
+    //List[String] => ValidatedList[String, User]
+    list.traverse(s => User.validate(s))
+  }
+
+  // = Valid(List(User(joanna,doe), User(barbara,doe), User(kevin,doe), User(jonathan,doe), User(jason,doe), User(jane,doe), User(john,doe)))
+  val allUsersList1 = allUsers(model.userList1)
+
+  // = Invalid(List(Could not parse the String 'wronguser' as a User, Could not parse the String 'embarrassing' as a User, Could not parse the String 'hellofriend' as a User, Could not parse the String 'oops' as a User))
+  val allUsersList2 = allUsers(model.userList2)
 
   // Next we want to write a function that takes a String representing a user
   // and return the UserReport for that user using the `User.fetchReport` function
