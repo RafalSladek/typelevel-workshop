@@ -37,7 +37,8 @@ object monoids {
     def <<<[A, B, C](fbc: F[B, C], fab: F[A, B]): F[A, C] = compose(fab, fbc)
   }
 
-  implicit def categoryFunction: Category[Function1] = ???
+  implicit def categoryFunction: Category[Function1] = new Category[Function1] {
+    def compose[A, B, C](fab: A => B, fbc: B => C): A => C = a => fbc(fab(a))
 
   implicit def monoidEndoCategory[F[_, _]: Category, A]: Monoid[F[A, A]] = ???
 
