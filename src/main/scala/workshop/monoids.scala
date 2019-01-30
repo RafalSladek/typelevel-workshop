@@ -251,7 +251,7 @@ object monoids {
                                                   y: B => F[C]): A => F[C] =
     a => x(a).flatMap(y)
 
-  // Kleisli
+  // Kleisli - implement category and profucntor and generlize it so that you don't need optiofunc and failfunc ... to implement with category or profunctor
 
   case class Kleisli[F[_], A, B](apply: A => F[B])
 
@@ -272,6 +272,15 @@ object monoids {
 
   // Now that we have Kleisli, go back and redefine OptionFunction and FailFunction as a special case of Kleisli
 
+  type OptionFunc[A, B] = Kleisli[Option, A, B] // A => Option[B]
+
+  def test(a: OptionFunc[Int, String]): Int => Option[String] = a.apply
+
+  type ThrowableEither[A] = Either[Throwable, A] // it is replacement for ?
+  type FailFunc[A, B] = Kleisli[ThrowableEither, A, B] // A => Either[Throwable, B]
+  //type FailFunc[A, B] = Kleisli[Either[Throwable, ?], A, B] // A => Either[Throwable, B]
+
+  def test2(a: FailFunc[Int, String]): Int => ThrowableEither[String] = a.apply
   // IO
 
   case class IO[A](unsafeRun: () => A) {
