@@ -281,17 +281,35 @@ object monoids {
   //type FailFunc[A, B] = Kleisli[Either[Throwable, ?], A, B] // A => Either[Throwable, B]
 
   def test2(a: FailFunc[Int, String]): Int => ThrowableEither[String] = a.apply
+
   // IO
+  // for comprehension is a nested flatMapping
 
   case class IO[A](unsafeRun: () => A) {
-    def map[B](f: A => B): IO[B] = ???
+    def map[B](f: A => B): IO[B] = IO(() => f(unsafeRun()))
   }
 
   implicit def monadIO: Monad[IO] = new Monad[IO] {
-    def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = ???
+    def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] =
+      IO(() => f(fa.unsafeRun()).unsafeRun())
 
-    def unit: IO[Unit] = ???
+    // f(fa(unsafeRun)) will not suspend the side effects
+
+    def unit: IO[Unit] = IO(() => ())
   }
+
+  val printHello: IO[Unit] = IO(() => println("Hello"))
+  val printBye: IO[Unit] = IO(() => println("bye"))
+
+  def testIoUnsafe =
+    for {
+      a <- printHello
+      b <- printBye
+    } yield () // you will not see the prints on the console
+
+  def testIOunsafeRun =
+    testIoUnsafe
+      .unsafeRun() // this will run the function now and print them on the console
 
   // Run both effects one after another, but only return the result of the second
   def ignoreFirstResult[A, B](fa: IO[A], fb: IO[B]): IO[B] = ???
