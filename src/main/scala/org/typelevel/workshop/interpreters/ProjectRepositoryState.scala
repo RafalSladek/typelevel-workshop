@@ -5,12 +5,16 @@ import org.typelevel.workshop.model.Project
 import cats.data.State
 
 object ProjectRepositoryState {
-  implicit def projectRepoInterpreter: ProjectRepository[State[List[Project], ?]] =
+  implicit def projectRepoInterpreter
+    : ProjectRepository[State[List[Project], ?]] =
     new ProjectRepository[State[List[Project], ?]] {
       def findByName(name: String): State[List[Project], Option[Project]] =
         State.get[List[Project]].map(_.find(_.name == name))
 
       def deleteProject(name: String): State[List[Project], Unit] =
         State.modify[List[Project]](_.filter(_.name == name))
+
+      def allProjects(): State[List[Project], List[Project]] =
+        State.get[List[Project]]
     }
 }

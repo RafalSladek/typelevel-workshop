@@ -9,18 +9,27 @@ import org.typelevel.workshop.db.Database
 
 object ProjectRepositoryIO {
 
-  implicit def projectRepoInterpreter: ProjectRepository[IO] = new ProjectRepository[IO] {
-    def findByName(name: String): IO[Option[Project]] =
-      sql"""
+  implicit def projectRepoInterpreter: ProjectRepository[IO] =
+    new ProjectRepository[IO] {
+      def findByName(name: String): IO[Option[Project]] =
+        sql"""
         SELECT p.id, p.name, p.description, u.id, u.username, u.email
         FROM project p JOIN user u ON p.owner = u.id
         WHERE p.name = $name
       """.query[Project].option.transact(Database.xa)
 
+      def allProjects(): IO[List[Project]] =
+        sql"""
+        SELECT p.id, p.name, p.description, u.id, u.username, u.email
+        FROM project p JOIN user u ON p.owner = u.id
+      """.query[Project].to[List].transact(Database.xa)
 
-    def deleteProject(name: String): IO[Unit] = (for {
-      projectId <- sql"SELECT id FROM project WHERE name = $name".query[Int].unique
-      _ <- sql"DELETE FROM project WHERE id = $projectId".update.run
-    } yield ()).transact(Database.xa).attempt.void
-  }
+      def deleteProject(name: String): IO[Unit] =
+        (for {
+          projectId <- sql"SELECT id FROM project WHERE name = $name"
+            .query[Int]
+            .unique
+          _ <- sql"DELETE FROM project WHERE id = $projectId".update.run
+        } yield ()).transact(Database.xa).attempt.void
+    }
 }

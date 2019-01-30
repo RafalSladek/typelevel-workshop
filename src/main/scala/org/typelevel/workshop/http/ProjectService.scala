@@ -23,6 +23,15 @@ class ProjectService[F[_]: Sync: ProjectRepository: Logging]
             s"No project found: $name".asJson)
       }
 
+    case GET -> Root =>
+      ProjectRepository[F].allProjects().flatMap {
+        case Nil =>
+          Logging[F].logError(s"allProjects") *> NotFound(
+            s"No projects found".asJson)
+        case list =>
+          Logging[F].logInfo(s"allProjects") *> Ok(list)
+      }
+
     case req @ DELETE -> Root / name =>
       ProjectRepository[F].deleteProject(name).flatMap(_ => NoContent())
 
