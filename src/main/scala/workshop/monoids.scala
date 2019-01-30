@@ -12,7 +12,7 @@ import workshop.monoids.Monad.ops._
 
 import scala.util.Try
 import scala.concurrent.Future
-import scala.io.StdIn
+import scala.io.{Source, StdIn}
 
 object monoids {
 
@@ -312,14 +312,42 @@ object monoids {
       .unsafeRun() // this will run the function now and print them on the console
 
   // Run both effects one after another, but only return the result of the second
-  def ignoreFirstResult[A, B](fa: IO[A], fb: IO[B]): IO[B] = ???
+  def ignoreFirstResult[A, B](fa: IO[A], fb: IO[B]): IO[B] =
+    for {
+      a <- fa
+      b <- fb
+    } yield b
 
   // Run both effects one after another, but only return the result of the first
-  def ignoreSecondResult[A, B](fa: IO[A], fb: IO[B]): IO[A] = ???
+  def ignoreSecondResult[A, B](fa: IO[A], fb: IO[B]): IO[A] =
+    for {
+      a <- fa
+      b <- fb
+    } yield a
 
   // Reimplement fileprogram using `IO` instead
   // Tip: You can use for-comprehensions, you can try writing a version with and without using for-comprehensions
-  def fileProgramIO = ???
+
+  // readFileName >>> loadFile >>> readFile >>> printOutFile
+
+  def readFileNameIO = IO(() => "data/test.txt") // StdIn.readLine
+
+  def readFileIO(fileName: String) = IO(() => new java.io.File(fileName))
+
+  def readFileContent(file: File) =
+    IO(() => Source.fromFile(file).getLines.mkString)
+
+  def printFileIO(fileContent: String) = IO(() => println(fileContent))
+
+  def fileProgramIO =
+    for {
+      fileName <- readFileNameIO
+      file <- readFileIO(fileName)
+      fileContent <- readFileContent(file)
+      output <- printFileIO(fileContent)
+    } yield output
+
+  def testfileProgramIO = fileProgramIO.unsafeRun()
 
   // Use IO to print out each of the names given to this function
   // You can test this using `model.userList1`
