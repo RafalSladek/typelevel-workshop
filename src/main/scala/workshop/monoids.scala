@@ -248,16 +248,27 @@ object monoids {
   }
 
   def composeMonadFunctions[F[_]: Monad, A, B, C](x: A => F[B],
-                                                  y: B => F[C]): A => F[C] = ???
+                                                  y: B => F[C]): A => F[C] =
+    a => x(a).flatMap(y)
 
   // Kleisli
 
   case class Kleisli[F[_], A, B](apply: A => F[B])
 
-  implicit def categoryKleisli[F[_]: Monad]: Category[Kleisli[F, ?, ?]] = ???
+  implicit def categoryKleisli[F[_]: Monad]: Category[Kleisli[F, ?, ?]] =
+    new Category[Kleisli[F, ?, ?]] {
+      def compose[A, B, C](fab: Kleisli[F, A, B],
+                           fbc: Kleisli[F, B, C]): Kleisli[F, A, C] =
+        Kleisli(composeMonadFunctions(fab.apply, fbc.apply))
+
+      def identity[A]: Kleisli[F, A, A] = Kleisli(a => Monad[F].pure(a))
+    }
 
   implicit def profunctorKleisli[F[_]: Monad]: Profunctor[Kleisli[F, ?, ?]] =
-    ???
+    new Profunctor[Kleisli[F, ?, ?]] {
+      def dimap[A, B, C, D](fac: Kleisli[F, B, C])(f: A => B)(
+          g: C => D): Kleisli[F, A, D] = Kleisli(a => fac.apply(f(a)).map(g))
+    }
 
   // Now that we have Kleisli, go back and redefine OptionFunction and FailFunction as a special case of Kleisli
 
