@@ -334,17 +334,29 @@ object monoids {
 
   def readFileIO(fileName: String) = IO(() => new java.io.File(fileName))
 
+  def readFileContentIO(file: File) =
+    IO(() => Source.fromFile(file).getLines.mkString)
+
   def readFileContent(file: File) =
     IO(() => Source.fromFile(file).getLines.mkString)
 
   def printFileIO(fileContent: String) = IO(() => println(fileContent))
 
+  def attempt[A](ioa: IO[A]): IO[Either[Throwable, A]] =
+    IO(() =>
+      try { Right(ioa.unsafeRun()) } catch { case t: Throwable => Left(t) })
+
+  def readFileEither(file: File) = attempt(readFileContent(file))
+
   def fileProgramIO =
     for {
       fileName <- readFileNameIO
       file <- readFileIO(fileName)
-      fileContent <- readFileContent(file)
-      output <- printFileIO(fileContent)
+      fileOrEither <- readFileEither(file)
+      output <- fileOrEither match {
+        case Right(a) => printFileIO(a)
+        case Left(t)  => printFileIO(s"Error:${t}")
+      }
     } yield output
 
   def testfileProgramIO = fileProgramIO.unsafeRun()
