@@ -46,6 +46,11 @@ lazy val root = (project in file("."))
 
       "org.scalatest"     %% "scalatest"           % ScalaTestVersion  % Test,
       "org.scalacheck"    %% "scalacheck"          % ScalaCheckVersion % Test
-    )
+    ),
+    initialCommands in console := """
+      import workshop.effect._
+      import workshop.circe._
+      """
+
   )
 

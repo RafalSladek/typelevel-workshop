@@ -46,10 +46,17 @@ object effect {
   implicit val ctx: ContextShift[IO] = IO.contextShift(global)
 
   // User `IO#start` to implement a "fire-and-forget" function
-  def fireAndForget[A](io: IO[A]): IO[Unit] = ???
+  def fireAndForget[A](io: IO[A]): IO[Unit] = io.start.map(_ => ())
 
   // Use IO.sleep to create IO values that return after a given amount of time (this won't block)
   IO.sleep(5.seconds)
+
+  val test: IO[Int] = for {
+    _ <- IO.sleep(3.seconds)
+    _ <- IO(println("Waited 3 seconds"))
+  } yield 3
+
+  def testfireAndForgetWith = fireAndForget(test).unsafeRunSync()
 
   // Write a function that starts an `IO` and cancels it if it's not completed after 2 seconds
   def timeoutAfter[A](io: IO[A]): IO[A] = ???
