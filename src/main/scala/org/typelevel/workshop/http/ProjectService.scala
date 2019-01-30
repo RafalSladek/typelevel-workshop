@@ -7,16 +7,20 @@ import io.circe.generic.auto._
 import org.http4s.HttpService
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
-import org.typelevel.workshop.algebra.ProjectRepository
+import org.typelevel.workshop.algebra.{Logging, ProjectRepository}
 
-class ProjectService[F[_]: Sync: ProjectRepository] extends Http4sDsl[F] {
+class ProjectService[F[_]: Sync: ProjectRepository: Logging]
+    extends Http4sDsl[F] {
 
   def service: HttpService[F] = HttpService[F] {
 
     case GET -> Root / name =>
       ProjectRepository[F].findByName(name).flatMap {
-        case Some(project) => Ok(project)
-        case None => NotFound(s"No project found: $name".asJson)
+        case Some(project) =>
+          Logging[F].logInfo(s"findByName:${name}") *> Ok(project)
+        case None =>
+          Logging[F].logError(s"findByName:${name}") *> NotFound(
+            s"No project found: $name".asJson)
       }
 
     case req @ DELETE -> Root / name =>
