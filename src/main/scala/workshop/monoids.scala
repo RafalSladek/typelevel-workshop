@@ -296,6 +296,8 @@ object monoids {
     // f(fa(unsafeRun)) will not suspend the side effects
 
     def unit: IO[Unit] = IO(() => ())
+
+    override def pure[A](a: A): IO[A] = IO(() => a)
   }
 
   val printHello: IO[Unit] = IO(() => println("Hello"))
@@ -361,8 +363,12 @@ object monoids {
 
   def testfileProgramIO = fileProgramIO.unsafeRun()
 
+  import workshop.abstractions.Traverse.ops._
   // Use IO to print out each of the names given to this function
   // You can test this using `model.userList1`
-  def printAll(names: List[String]): IO[Unit] = ???
+  def printAll(names: List[String]): IO[Unit] =
+    names.traverse(printFileIO).map(_ => Unit)
+
+  def testprintAll = printAll(model.userList1).unsafeRun()
 
 }
