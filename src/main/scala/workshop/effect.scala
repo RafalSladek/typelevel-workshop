@@ -59,7 +59,13 @@ object effect {
   def testfireAndForgetWith = fireAndForget(test).unsafeRunSync()
 
   // Write a function that starts an `IO` and cancels it if it's not completed after 2 seconds
-  def timeoutAfter[A](io: IO[A]): IO[A] = ???
+  def timeoutAfter[A](io: IO[A]): IO[Option[A]] = {
+    // IO(io.unsafeRunTimed(2.seconds)) // my solution
+    IO.race(IO.sleep(2.seconds).map(_ => "wait 2 sec"), io)
+      .map(_.toOption) // Luka
+  }
+
+  def testtimeoutAfter = timeoutAfter(test).unsafeRunSync()
 
   // `Resource` automatically releases resources such as file handles in the reverse order of acquisition
   def readFile(file: File): Resource[IO, List[String]] = {
