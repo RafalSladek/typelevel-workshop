@@ -30,12 +30,26 @@ object tagless {
     def readLine: IO[String] = IO(() => StdIn.readLine)
   }
 
-  def testconsoleProgram = consoleProgram[IO].unsafeRun()
+  def testconsoleProgramIO = consoleProgram[IO].unsafeRun()
 
   type Id[A] = A
 
+  implicit def monadId: Monad[Id] = new Monad[Id] {
+    def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B] = f(fa)
+
+    def unit: Id[Unit] = ()
+
+    override def pure[A](a: A): A = a
+  }
+
   //create a Console interpreter for Id that does nothing for printing and returns a static string for reading
-  implicit def consoleId: Console[Id] = ???
+  implicit def consoleId: Console[Id] = new Console[Id] {
+    def printLine(s: String): Unit = println(s"Hello ${s}")
+
+    def readLine: Id[String] = "Rafal"
+  }
+
+  def testconsoleProgramId = consoleProgram[Id]
 
   // Create a Tagless algebra for accesing the file system
   trait FileSystem[F[_]]
