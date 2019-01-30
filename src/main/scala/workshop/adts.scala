@@ -18,10 +18,13 @@ object adts {
 
   // Design a data type for a chess piece and its position on the chess board
   // Write a function using pattern matching that takes a square and returns whether it can move there or not
-  sealed trait ChessType {
+  sealed trait ChessPiece {
     def canMove(target: Position): Boolean
+
+    val current: Position
   }
-  case class King(current: Position) extends ChessType {
+
+  case class King(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (a, b) if a == b && a == 0 || a == 1 =>
@@ -32,7 +35,7 @@ object adts {
       }
   }
 
-  case class Queen(current: Position) extends ChessType {
+  case class Queen(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (_, 0)           => true
@@ -41,7 +44,7 @@ object adts {
         case _                => false
       }
   }
-  case class Rook(current: Position) extends ChessType {
+  case class Rook(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (0, 0) => true
@@ -51,7 +54,7 @@ object adts {
       }
   } // wieza
 
-  case class Bishop(current: Position) extends ChessType {
+  case class Bishop(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (a, b) if a == b => true
@@ -59,7 +62,7 @@ object adts {
       }
   } // goniec
 
-  case class Knight(current: Position) extends ChessType {
+  case class Knight(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (0, 0) => true
@@ -69,7 +72,7 @@ object adts {
       }
   } // skoczek
 
-  case class Pawn(current: Position) extends ChessType {
+  case class Pawn(current: Position) extends ChessPiece {
     override def canMove(target: Position): Boolean =
       current.getDiff(target) match {
         case (0, 0) => true
@@ -82,8 +85,6 @@ object adts {
     def getDiff(target: Position): (Int, Int) =
       (Math.abs(target.x - x), Math.abs(target.y - y))
   }
-
-  case class ChessPiece(chessType: ChessType, position: Position)
 
   sealed trait TimeUnit
   case object Second extends TimeUnit

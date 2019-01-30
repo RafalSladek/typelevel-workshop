@@ -28,7 +28,7 @@ object typeclasses {
 
   implicit def showChessPiece: Show[ChessPiece] = new Show[ChessPiece] {
     def show(a: ChessPiece): String =
-      s"""${a.chessType.getClass.getCanonicalName} : ${a.position.x.toString}, ${a.position.y.toString}"""
+      s"""${a.getClass.getCanonicalName} : ${a.current.x.toString}, ${a.current.y.toString}"""
   }
 
   implicit def showOption[A: Show]: Show[Option[A]] = new Show[Option[A]] {
