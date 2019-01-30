@@ -80,9 +80,17 @@ object effect {
   }
 
   // Try reading 3-4 different files after each other and observe how they get released
-  def severalFiles: Resource[IO, List[String]] = ???
+  def severalFiles: Resource[IO, List[String]] = {
+    for {
+      f1 <- readFile(new File("data/test.txt"))
+      f2 <- readFile(new File("bulshit.txt"))
+      f3 <- readFile(new File("build.sbt"))
+    } yield f1 ++ f2 ++ f3
+  }
 
   // Next let's run the `Resource` and turn it into an IO[List[String]]
   def severalFilesIO: IO[List[String]] =
     severalFiles.use((list: List[String]) => IO.pure(list))
+
+  def testseveralFilesIO = severalFilesIO.unsafeRunSync()
 }
